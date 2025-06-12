@@ -204,9 +204,9 @@ jobs:
           echo "" >> ../release_notes.md
           echo "### 🛠 Flash command" >> ../release_notes.md
           echo "" >> ../release_notes.md
-          echo '\`\`\`bash' >> ../release_notes.md
+          echo '```bash' >> ../release_notes.md
           echo "$FLASH_CMD" >> ../release_notes.md
-          echo '\`\`\`' >> ../release_notes.md
+          echo '```' >> ../release_notes.md
 
       - name: Upload release with full package
         uses: softprops/action-gh-release@v2
