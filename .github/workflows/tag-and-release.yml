@@ -129,7 +129,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: firmware
-          path: .pio/build/*/*.bin
+          path: .pio/build/
 
   release:
     runs-on: ubuntu-latest
@@ -168,7 +168,8 @@ jobs:
       - name: Generate manifest, package & flash command
         run: |
           mkdir dist
-          cp firmware/*.bin dist/
+          # Recherche récursive des binaires (peu importe le sous-répertoire)
+          find firmware -name "*.bin" -exec cp {} dist/ \;
 
           cd dist
 
@@ -214,7 +215,7 @@ jobs:
           name: "Release ${{ needs.prepare.outputs.new_version }}"
           body_path: release_notes.md
           files: |
-            firmware/**/*.bin
+            dist/*.bin
             dist/firmware_package.zip
             dist/manifest.json
             dist/sha256sums.txt
