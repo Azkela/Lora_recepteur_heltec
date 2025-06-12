@@ -165,12 +165,58 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Create GitHub Release
+      - name: Generate manifest, package & flash command
+        run: |
+          mkdir dist
+          cp firmware/*.bin dist/
+
+          cd dist
+
+          # SHA256 sums
+          for file in *.bin; do
+            sha256sum "$file" >> sha256sums.txt
+          done
+
+          # Manifest.json
+          echo "{" > manifest.json
+          echo "  \"version\": \"${{ needs.prepare.outputs.new_version }}\"," >> manifest.json
+          echo "  \"files\": [" >> manifest.json
+          for file in *.bin; do
+            sha=$(sha256sum "$file" | awk '{print $1}')
+            size=$(stat --format="%s" "$file")
+            echo "    {" >> manifest.json
+            echo "      \"name\": \"$file\"," >> manifest.json
+            echo "      \"size\": $size," >> manifest.json
+            echo "      \"sha256\": \"$sha\"" >> manifest.json
+            echo "    }," >> manifest.json
+          done | sed '$ s/},/}/' >> manifest.json
+          echo "  ]" >> manifest.json
+          echo "}" >> manifest.json
+
+          # ZIP package
+          zip firmware_package.zip *.bin manifest.json sha256sums.txt
+
+          # Génération de la commande esptool
+          FLASH_CMD="esptool.py --chip esp32 --baud 460800 --before default_reset --after hard_reset write_flash"
+          FLASH_CMD="$FLASH_CMD 0x1000 bootloader.bin 0x8000 partitions.bin 0x10000 firmware.bin"
+
+          echo "" >> ../release_notes.md
+          echo "### 🛠 Flash command" >> ../release_notes.md
+          echo "" >> ../release_notes.md
+          echo '\`\`\`bash' >> ../release_notes.md
+          echo "$FLASH_CMD" >> ../release_notes.md
+          echo '\`\`\`' >> ../release_notes.md
+
+      - name: Upload release with full package
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ needs.prepare.outputs.new_version }}
           name: "Release ${{ needs.prepare.outputs.new_version }}"
           body_path: release_notes.md
-          files: firmware/**/*.bin
+          files: |
+            firmware/**/*.bin
+            dist/firmware_package.zip
+            dist/manifest.json
+            dist/sha256sums.txt
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
