@@ -5,7 +5,7 @@ void setup() {
   Serial.begin(115200);
   while (!Serial);
 
-  LoRa.setPins(18, 14, 26); // NSS, RESET, DIO0
+  LoRa.setPins(18, 14, 26);
   if (!LoRa.begin(868E6)) {
     Serial.println("LoRa init failed.");
     while (1);
