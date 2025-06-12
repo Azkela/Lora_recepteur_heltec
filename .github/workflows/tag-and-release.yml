@@ -1,0 +1,162 @@
+name: Auto Tag & Release
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  determine_version:
+    runs-on: ubuntu-latest
+    outputs:
+      new_version: ${{ steps.set_version.outputs.NEW_VERSION }}
+      last_tag: ${{ steps.get_latest_tag.outputs.TAG }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get latest tag
+        id: get_latest_tag
+        run: |
+          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo 'v0.0.0')
+          echo "TAG=$LAST_TAG" >> $GITHUB_ENV
+          echo "TAG=$LAST_TAG" >> $GITHUB_OUTPUT
+
+      - name: Debug Last Tag
+        run: |
+          echo "Last Tag: ${{ env.TAG }}"
+
+      - name: Determine next version
+        id: set_version
+        run: |
+          latest_tag=${{ env.TAG }}
+          echo "Latest tag: $latest_tag"
+
+          # Extraire la version actuelle
+          version=$(echo $latest_tag | sed 's/v//')
+          major=$(echo $version | cut -d. -f1)
+          minor=$(echo $version | cut -d. -f2)
+          patch=$(echo $version | cut -d. -f3)
+
+          # Vérifier les mots-clés dans le commit
+          if git log -1 --pretty=%B | grep -q "#major"; then
+            major=$((major + 1))
+            minor=0
+            patch=0
+          elif git log -1 --pretty=%B | grep -q "#minor"; then
+            minor=$((minor + 1))
+            patch=0
+          else
+            patch=$((patch + 1))
+          fi
+
+          new_version="v$major.$minor.$patch"
+          echo "New version: $new_version"
+          echo "NEW_VERSION=$new_version" >> $GITHUB_ENV
+          echo "NEW_VERSION=$new_version" >> $GITHUB_OUTPUT
+
+  generate_changelog:
+    runs-on: ubuntu-latest
+    needs: determine_version
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Debug Commits
+        run: |
+          echo "Fetching commits from ${{ needs.determine_version.outputs.last_tag }} to HEAD"
+          git log ${{ needs.determine_version.outputs.last_tag }}..HEAD --oneline || echo "No commits found."
+
+      - name: Generate changelog
+        run: |
+          echo "## 📝 Changelog" > release_notes.md
+          echo "" >> release_notes.md
+
+          echo "### 🚀 Changes in this release (${{ needs.determine_version.outputs.new_version }})" >> release_notes.md
+          echo "" >> release_notes.md
+
+          # Récupérer la liste des commits et l'ajouter directement au changelog
+          git log ${{ needs.determine_version.outputs.last_tag }}..HEAD --pretty=format:"- [%h](https://github.com/${{ github.repository }}/commit/%h) %s" > commit_list.txt
+
+          echo "DEBUG: Contents of commit_list.txt:"
+          cat commit_list.txt || echo "No commits found."
+
+          if [ -s commit_list.txt ]; then
+            cat commit_list.txt >> release_notes.md
+          else
+            echo "No commits since last release." >> release_notes.md
+          fi
+
+          echo "" >> release_notes.md
+          echo "### 📂 Modified Files" >> release_notes.md
+          echo "" >> release_notes.md
+
+          # Ajouter les fichiers modifiés pour chaque commit
+          for commit in $(git log ${{ needs.determine_version.outputs.last_tag }}..HEAD --pretty=format:"%h"); do
+              echo "#### Commit: $commit" >> release_notes.md
+              git show --name-only --pretty=format:"" $commit | sed 's/^/- /' >> release_notes.md
+              echo "" >> release_notes.md
+          done
+
+          cat release_notes.md
+
+      - name: Upload changelog artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: release_notes
+          path: release_notes.md
+
+  create_tag:
+    runs-on: ubuntu-latest
+    needs: [determine_version, generate_changelog]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Create new tag
+        run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "github-actions@github.com"
+          git tag ${{ needs.determine_version.outputs.new_version }}
+          git push origin ${{ needs.determine_version.outputs.new_version }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  create_release:
+    runs-on: ubuntu-latest
+    needs: [determine_version, generate_changelog, create_tag]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Download changelog artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: release_notes
+          path: .
+
+      - name: Debug Release Notes
+        run: |
+          cat release_notes.md
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.determine_version.outputs.new_version }}
+          name: "Release ${{ needs.determine_version.outputs.new_version }}"
+          body_path: release_notes.md
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
