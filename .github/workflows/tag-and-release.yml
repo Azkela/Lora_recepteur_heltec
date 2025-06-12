@@ -214,10 +214,6 @@ jobs:
           tag_name: ${{ needs.prepare.outputs.new_version }}
           name: "Release ${{ needs.prepare.outputs.new_version }}"
           body_path: release_notes.md
-          files: |
-            dist/*.bin
-            dist/firmware_package.zip
-            dist/manifest.json
-            dist/sha256sums.txt
+          files: dist/firmware_package.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
