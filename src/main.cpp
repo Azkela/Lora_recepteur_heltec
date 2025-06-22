@@ -1,25 +1,28 @@
 #include <Arduino.h>
-#include <LoRa.h>
+#include "wifi_manager.h"
+#include "sensor_api.hpp"
 
-void setup() {
+void setup()
+{
   Serial.begin(115200);
-  while (!Serial);
+  while (!Serial)
+    ;
 
-  LoRa.setPins(18, 14, 26);
-  if (!LoRa.begin(868E6)) {
-    Serial.println("LoRa init failed.");
-    while (1);
-  }
-  Serial.println("LoRa Receiver Ready");
+  connectToWiFi();
+  Serial.printf("Connected to WiFi");
+  // Test : message brut JSON
+  String testPayload = R"rawliteral(
+{
+  "sensordatavalues": [
+    { "value_type": "temperature", "value": "23.4" }
+  ]
+}
+)rawliteral";
+
+  sendToSensorCommunityRawPayload(testPayload);
 }
 
-void loop() {
-  int packetSize = LoRa.parsePacket();
-  if (packetSize) {
-    String incoming = "";
-    while (LoRa.available()) {
-      incoming += (char)LoRa.read();
-    }
-    Serial.println("Received: " + incoming);
-  }
+void loop()
+{
+  // vide pour le test
 }
