@@ -1,17 +1,17 @@
 #include <WiFi.h>
 #include "wifi_manager.h"
 #include "variables.hpp"
+#include "display_manager.hpp"
 
 void connectToWiFi()
 {
     WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
-    Serial.print("Connecting to WiFi");
+    DisplayManager::log("Connexion WiFi...");
     while (WiFi.status() != WL_CONNECTED)
     {
         delay(500);
         Serial.print(".");
     }
-    Serial.println("\nWiFi connected!");
-    Serial.print("IP address: ");
-    Serial.println(WiFi.localIP());
+    DisplayManager::log("WiFi connecte !");
+    DisplayManager::log("IP: " + WiFi.localIP().toString());
 }

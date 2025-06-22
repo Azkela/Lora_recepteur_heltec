@@ -1,9 +1,10 @@
 #include <WiFi.h>
 #include <HTTPClient.h>
 #include "sensor_api.hpp"
+#include "display_manager.hpp"
 
 // Remplace par l'ID unique de ton capteur
-const char *SENSOR_ID = "esp32-heltec-mar-2";
+const char *SENSOR_ID = "esp32-heltec-mar2";
 
 // void sendToSensorCommunity(const String &type, const String &value)
 // {
@@ -48,17 +49,17 @@ void sendToSensorCommunityRawPayload(const String &jsonPayload)
 
         if (httpResponseCode > 0)
         {
-            Serial.printf("✅ Data sent. Response code: %d\n", httpResponseCode);
+            DisplayManager::log("Data sent: " + String(httpResponseCode));
         }
         else
         {
-            Serial.printf("❌ Error sending data: %s\n", http.errorToString(httpResponseCode).c_str());
+            DisplayManager::log("Send error: " + http.errorToString(httpResponseCode));
         }
 
         http.end();
     }
     else
     {
-        Serial.println("❌ WiFi not connected.");
+        DisplayManager::log("WiFi not connected.");
     }
 }
