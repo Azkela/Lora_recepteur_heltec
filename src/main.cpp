@@ -2,6 +2,7 @@
 #include "wifi_manager.h"
 #include "sensor_api.hpp"
 #include "display_manager.hpp"
+#include "variables.hpp"
 
 void setup()
 {
@@ -16,23 +17,21 @@ void setup()
   DisplayManager::log("WiFi connecté");
 
   sendToSensorCommunity(
-      "11",              
+      PIN_BME280,
       "esp32_bme280_1.0",
-      {
-          {"temperature", "23.7"},
-          {"humidity", "49.8"},
-          {"pressure", "1014.2"}});
+      {{"temperature", "23.7"},
+       {"humidity", "49.8"},
+       {"pressure", "1014.2"}});
 
   sendToSensorCommunity(
-      "5",
+      PIN_GP2Y1010,
       "esp32_gp2y1010_1.0",
       {{"P1", "18.5"}});
 
   sendToSensorCommunity(
-      "7",
+      PIN_INMP441,
       "esp32_inmp441_1.0",
-      {{"P2", "62.4"}}
-  );
+      {{"P2", "62.4"}});
 }
 
 void loop()

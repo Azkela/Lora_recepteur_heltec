@@ -3,8 +3,9 @@
 #include <ArduinoJson.h>
 #include "sensor_api.hpp"
 #include "display_manager.hpp"
+#include "variables.hpp"
 
-const char *GLOBAL_SENSOR_ID = "esp32-7355608";
+const char *GLOBAL_SENSOR_ID = NODE_ID;
 
 void sendToSensorCommunity(
     const String &xPin,
