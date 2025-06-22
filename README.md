@@ -101,7 +101,7 @@ Simulate a real HTTP POST like the ESP32 does:
 ```bash
 curl -X POST https://api.sensor.community/v1/push-sensor-data/ \
   -H "Content-Type: application/json" \
-  -H "X-Sensor: esp32-heltec-mar-2" \
+  -H "X-Sensor: esp32-4502E02F" \
   -d '{
     "sensordatavalues": [
       { "value_type": "temperature", "value": "23.4" }

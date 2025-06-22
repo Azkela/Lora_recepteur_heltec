@@ -4,7 +4,7 @@
 #include "display_manager.hpp"
 
 // Remplace par l'ID unique de ton capteur
-const char *SENSOR_ID = "esp32-heltec-mar2";
+const char *SENSOR_ID = "esp32-4502E02F";
 
 // void sendToSensorCommunity(const String &type, const String &value)
 // {
