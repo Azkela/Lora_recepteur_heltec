@@ -121,6 +121,11 @@ jobs:
           python3 -m pip install --upgrade pip
           pip install platformio
 
+      - name: Generate variables.hpp
+        run: |
+          cp include/variables.hpp.template include/variables.hpp
+          echo "Generated variables.hpp from template."
+
       - name: Build with PlatformIO
         run: |
           platformio run
