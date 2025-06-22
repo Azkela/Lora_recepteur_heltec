@@ -1,65 +1,53 @@
 #include <WiFi.h>
 #include <HTTPClient.h>
+#include <ArduinoJson.h>
 #include "sensor_api.hpp"
 #include "display_manager.hpp"
 
-// Remplace par l'ID unique de ton capteur
-const char *SENSOR_ID = "esp32-4502E02F";
+const char *GLOBAL_SENSOR_ID = "esp32-7355608";
 
-// void sendToSensorCommunity(const String &type, const String &value)
-// {
-//     if (WiFi.status() == WL_CONNECTED)
-//     {
-//         HTTPClient http;
-//         http.begin("https://api.sensor.community/v1/push-sensor-data/");
-//         http.addHeader("Content-Type", "application/json");
-//         http.addHeader("X-Sensor", SENSOR_ID);
-
-//         String payload = "{\"sensordatavalues\":[{\"value_type\":\"" + type + "\",\"value\":\"" + value + "\"}]}";
-//         int httpResponseCode = http.POST(payload);
-
-//         if (httpResponseCode > 0)
-//         {
-//             Serial.printf("Data sent. Response: %d\n", httpResponseCode);
-//         }
-//         else
-//         {
-//             Serial.printf("Error sending data: %s\n", http.errorToString(httpResponseCode).c_str());
-//         }
-//         http.end();
-//     }
-//     else
-//     {
-//         Serial.println("WiFi not connected, cannot send data.");
-//     }
-// }
-
-void sendToSensorCommunityRawPayload(const String &jsonPayload)
+void sendToSensorCommunity(
+    const String &xPin,
+    const String &softwareVersion,
+    const std::vector<std::pair<String, String>> &dataValues)
 {
-    if (WiFi.status() == WL_CONNECTED)
+    if (WiFi.status() != WL_CONNECTED)
     {
-        HTTPClient http;
-        const char *SENSOR_ID = "esp8266-12345678";
+        DisplayManager::log("WiFi not connected.");
+        return;
+    }
 
-        http.begin("https://api.sensor.community/v1/push-sensor-data/");
-        http.addHeader("Content-Type", "application/json");
-        http.addHeader("X-Sensor", SENSOR_ID);
+    HTTPClient http;
+    http.begin("http://api.sensor.community/v1/push-sensor-data/");
+    http.addHeader("Content-Type", "application/json");
+    http.addHeader("X-Sensor", GLOBAL_SENSOR_ID);
+    http.addHeader("X-Pin", xPin);
 
-        int httpResponseCode = http.POST(jsonPayload);
+    JsonDocument doc;
+    doc["software_version"] = softwareVersion;
+    JsonArray array = doc["sensordatavalues"].to<JsonArray>();
 
-        if (httpResponseCode > 0)
-        {
-            DisplayManager::log("Data sent: " + String(httpResponseCode));
-        }
-        else
-        {
-            DisplayManager::log("Send error: " + http.errorToString(httpResponseCode));
-        }
+    for (const auto &pair : dataValues)
+    {
+        JsonObject obj = array.add<JsonObject>();
+        obj["value_type"] = pair.first;
+        obj["value"] = pair.second;
+    }
 
-        http.end();
+    String jsonPayload;
+    serializeJson(doc, jsonPayload);
+
+    DisplayManager::log("Payload: " + jsonPayload);
+    int httpCode = http.POST(jsonPayload);
+
+    if (httpCode > 0)
+    {
+        DisplayManager::log("Sent (" + String(httpCode) + ")");
     }
     else
     {
-        DisplayManager::log("WiFi not connected.");
+        DisplayManager::log("Send error: " + http.errorToString(httpCode));
     }
+
+    http.end();
 }

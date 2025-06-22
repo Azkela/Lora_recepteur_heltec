@@ -1,10 +1,8 @@
-#ifndef SENSOR_API_HPP
-#define SENSOR_API_HPP
+#pragma once
+#include <Arduino.h>
+#include <vector>
 
-// Envoi structuré
-void sendToSensorCommunity(const String &type, const String &value);
-
-// ✅ Ajout pour l’envoi brut (JSON déjà formaté)
-void sendToSensorCommunityRawPayload(const String &jsonPayload);
-
-#endif // SENSOR_API_HPP
+void sendToSensorCommunity(
+    const String &xPin,
+    const String &softwareVersion,
+    const std::vector<std::pair<String, String>> &dataValues);

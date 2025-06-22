@@ -13,26 +13,28 @@ void setup()
   DisplayManager::log("Demarrage...");
 
   connectToWiFi();
+  DisplayManager::log("WiFi connecté");
 
-  String testPayload = R"rawliteral(
-    {
-      "sensordatavalues": [
-        { "value_type": "temperature", "value": "23.4" }  
-      ]
-    }
-    )rawliteral";
+  sendToSensorCommunity(
+      "11",              
+      "esp32_bme280_1.0",
+      {
+          {"temperature", "23.7"},
+          {"humidity", "49.8"},
+          {"pressure", "1014.2"}});
 
-  DisplayManager::log("Envoi JSON...");
-  sendToSensorCommunityRawPayload(testPayload);
-  DisplayManager::log("Termine !");
+  sendToSensorCommunity(
+      "5",
+      "esp32_gp2y1010_1.0",
+      {{"P1", "18.5"}});
+
+  sendToSensorCommunity(
+      "7",
+      "esp32_inmp441_1.0",
+      {{"P2", "62.4"}}
+  );
 }
 
 void loop()
 {
-  static unsigned long last = 0;
-  if (millis() - last > 10000)
-  {
-    last = millis();
-    DisplayManager::log("Ping à " + String(millis() / 1000) + "s");
-  }
 }
