@@ -123,7 +123,7 @@ jobs:
 
       - name: Generate variables.hpp
         run: |
-          cp include/variables.hpp.template include/variables.hpp
+          cp include/variables.template.hpp include/variables.hpp
           echo "Generated variables.hpp from template."
 
       - name: Build with PlatformIO
