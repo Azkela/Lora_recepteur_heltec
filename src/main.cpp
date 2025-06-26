@@ -23,5 +23,5 @@ void setup()
 void loop()
 {
   processIncomingLoRaMessage();
-  delay(1000);
+  delay(100);
 }

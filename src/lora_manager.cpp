@@ -29,6 +29,7 @@ void processIncomingLoRaMessage()
     while (LoRa.available())
         payload += (char)LoRa.read();
 
+    Serial.println("Received: " + payload);
     DisplayManager::log("Reçu: " + payload);
 
     JsonDocument doc;
@@ -39,7 +40,7 @@ void processIncomingLoRaMessage()
         return;
     }
 
-    if (!doc["groupID"].is<String>() || doc["groupID"] != "MAR-2")
+    if (!doc["groupID"].is<const char *>() || String(doc["groupID"].as<const char *>()) != "MAR-2")
     {
         DisplayManager::log("GroupID ignoré");
         return;
@@ -56,13 +57,13 @@ void processIncomingLoRaMessage()
         sendToSensorCommunity(
             PIN_BME280,
             "esp32_bme280_1.0",
-            {{"temperature", String(temperature)},
-             {"humidity", String(humidity)},
-             {"pressure", String(pressure)}});
+            {{"temperature", String(temperature, 2)},
+             {"humidity", String(humidity, 2)},
+             {"pressure", String(pressure, 2)}});
     }
     else
     {
-        DisplayManager::log("Données BME280 nulles ou invalides");
+        DisplayManager::log("BME280: données invalides");
     }
 
     if (dust_v > 0.01)
@@ -70,11 +71,11 @@ void processIncomingLoRaMessage()
         sendToSensorCommunity(
             PIN_GP2Y1010,
             "esp32_gp2y1010_1.0",
-            {{"P1", String(dust_v)}});
+            {{"P1", String(dust_v, 3)}});
     }
     else
     {
-        DisplayManager::log("Donnée GP2Y1010 invalide");
+        DisplayManager::log("GP2Y1010: donnée invalide");
     }
 
     if (sound_db > 0.01)
@@ -82,10 +83,10 @@ void processIncomingLoRaMessage()
         sendToSensorCommunity(
             PIN_INMP441,
             "esp32_inmp441_1.0",
-            {{"noise_LAeq", String(sound_db)}});
+            {{"noise_LAeq", String(sound_db, 2)}});
     }
     else
     {
-        DisplayManager::log("Donnée INMP441 invalide");
+        DisplayManager::log("INMP441: donnée invalide");
     }
 }
