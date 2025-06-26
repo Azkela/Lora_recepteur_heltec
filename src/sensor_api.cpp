@@ -19,7 +19,7 @@ void sendToSensorCommunity(
     }
 
     HTTPClient http;
-    http.begin("http://api.sensor.community/v1/push-sensor-data/");
+    http.begin(SENSOR_COMMUNITY_API_URL);
     http.addHeader("Content-Type", "application/json");
     http.addHeader("X-Sensor", GLOBAL_SENSOR_ID);
     http.addHeader("X-Pin", xPin);
